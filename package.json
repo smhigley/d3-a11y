@@ -1,0 +1,21 @@
+{
+  "name": "d3-a11y",
+  "description": "D3 chloropleth accessibility example",
+  "engines": {
+    "npm": ">=3.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/smhigley/d3-a11y.git"
+  },
+  "devDependencies": {
+    "d3": "^4.9.1",
+    "d3-scale-chromatic": "^1.1.1",
+    "file-loader": "^0.11.2",
+    "topojson": "^3.0.0",
+    "webpack": "^3.1.0"
+  },
+  "scripts": {
+    "build": "webpack"
+  }
+}
