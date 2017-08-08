@@ -15,7 +15,13 @@
 		</style>
 	</head>
 	<body>
-		<svg width="960" height="600"></svg>
+		<label for="search">Search population by county name and state</label>
+		<input id="search" type="search" placeholder="e.g. King County">
+		<div class="tooltip" aria-live="polite" aria-hidden="true"></div>
+		<svg width="960" height="600" tabindex="0" aria-labelledby="svg-title" aria-descibedby="svg-desc">
+			<title id="svg-title">US Population by County</title>
+			<desc id="svg-desc">Use the search input to get counties by name and state</desc>
+		</svg>
 		<script src="bundle.js"></script>
 	</body>
 </html>
