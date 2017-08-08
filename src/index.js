@@ -7,57 +7,78 @@ const svg = d3.select('svg'),
     width = +svg.attr('width'),
     height = +svg.attr('height');
 
+// save reference to DOM elements
+const dataTypeSelect = document.getElementById('select-data');
+const searchInput = document.getElementById('search');
+const tooltip = document.querySelector('.tooltip');
+
+let dataType = dataTypeSelect.value;
+
+// set up empty maps for our two datasets
 const population = d3.map();
+const vote_count = d3.map();
 
 const path = d3.geoPath();
 
-const x = d3.scaleLinear()
-    .domain([1, 10])
-    .rangeRound([600, 860]);
-
+// use to format large numbers
 const popFormat = d3.format(',');
+
+// d3 scales we'll use later
+const popScale = d3.scaleLog()
+    .domain([1,2000000])
+    .range([0,1]);
+const turnoutScale = d3.scaleLinear()
+    .domain([0, 100])
+    .range([0, 1]);
+const color = d3.scaleQuantize()
+    .domain([0,1])
+    .range(scaleChromatic.schemeGnBu[9]);
 
 d3.queue()
     .defer(d3.json, '../data/counties.json')
-    .defer(d3.csv, '../data/county-population.csv', function(d) {
+    .defer(d3.csv, '../data/county-population.csv', (d) => {
 			population.set(d.id, {
         name: d.name,
         state: d.abbr,
         population: parseInt(d.pop2016.replace(/,/g,''))
       });
 		})
+    .defer(d3.csv, '../data/votes.csv', (d) => {
+      vote_count.set(d.id, d.votes);
+    })
     .await(ready);
+
+// get either population or turnout data
+function getScaledValue(data) {
+  const county_population = population.get(data.id).population;
+  if (dataType === 'population') {
+    return popScale(county_population);
+  }
+  else {
+    var turnout = vote_count.get(data.id)/county_population * 100;
+    return turnoutScale(turnout);
+  }
+}
 
 function ready(error, counties) {
   if (error) throw error;
 
-	const popScale = d3.scaleLog()
-			.domain([1,2000000])
-			.range([0,1]);
-	const color = d3.scaleQuantize()
-	    .domain([0,1])
-	    .range(scaleChromatic.schemeGnBu[9]);
-
   svg.append('g')
-      .attr('class', 'counties')
+    .attr('class', 'counties')
     .selectAll('path')
-    .data(topojson.feature(counties, counties.objects.counties).features)
-    .enter().append('path')
-      .attr('fill', function(d) {
-				return color(popScale(population.get(d.id).population));
-			})
-      .attr('d', path)
-    .append('title')
-      .text(function(d) { return population.get(d.id).name; });
+      .data(topojson.feature(counties, counties.objects.counties).features)
+      .enter().append('path')
+        .attr('fill', (d) => color(getScaledValue(d)))
+        .attr('d', path)
+      .append('title')
+        .text((d) => population.get(d.id).name);
 
   svg.append('path')
-      .datum(topojson.mesh(counties, counties.objects.states, function(a, b) { return a !== b; }))
+      .datum(topojson.mesh(counties, counties.objects.states, (a, b) => a !== b))
       .attr('class', 'states')
       .attr('d', path);
 
-	// let's add key events
-	const searchInput = document.getElementById('search');
-	const tooltip = document.querySelector('.tooltip');
+	// add search event listener
 	searchInput.addEventListener('change', (e) => {
 		const terms = e.target.value.split(',');
     const county = population.values().find((c) => {
@@ -75,4 +96,10 @@ function ready(error, counties) {
 			tooltip.innerHTML = `We could not find a county matching ${e.target.value}`;
 		}
 	});
+
+  // add select change listener
+  dataTypeSelect.addEventListener('change', (e) => {
+    dataType = dataTypeSelect.value;
+    const paths = svg.selectAll('.counties path').attr('fill', (d) => color(getScaledValue(d)));
+  });
 }
