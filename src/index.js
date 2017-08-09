@@ -63,7 +63,6 @@ function getScaledValue(data) {
 }
 
 function updateTooltip(county) {
-  console.log('updating tooltip with county', county);
   let value;
   if (dataType === 'population') {
     value = popFormat(county.population);
