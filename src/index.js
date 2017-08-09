@@ -18,6 +18,7 @@ let dataType = dataTypeSelect.value;
 const population = d3.map();
 const vote_count = d3.map();
 
+// geographic path generator
 const path = d3.geoPath();
 
 // use to format large numbers
@@ -38,6 +39,7 @@ d3.queue()
     .defer(d3.json, '../data/counties.json')
     .defer(d3.csv, '../data/county-population.csv', (d) => {
 			population.set(d.id, {
+        id: d.id,
         name: d.name,
         state: d.abbr,
         population: parseInt(d.pop2016.replace(/,/g,''))
@@ -60,6 +62,20 @@ function getScaledValue(data) {
   }
 }
 
+function updateTooltip(county) {
+  console.log('updating tooltip with county', county);
+  let value;
+  if (dataType === 'population') {
+    value = popFormat(county.population);
+  }
+  else {
+    const county_votes = vote_count.get(county.id);
+    value = Math.round(parseInt(county_votes)/county.population * 100) + '%';
+  }
+
+  tooltip.innerHTML = `The ${dataType} of ${county.name}, ${county.state} is ${value}`;
+}
+
 function ready(error, counties) {
   if (error) throw error;
 
@@ -70,6 +86,9 @@ function ready(error, counties) {
       .enter().append('path')
         .attr('fill', (d) => color(getScaledValue(d)))
         .attr('d', path)
+        .on('click', (e) => {
+          updateTooltip(population.get(e.id))
+        })
       .append('title')
         .text((d) => population.get(d.id).name);
 
@@ -89,12 +108,13 @@ function ready(error, counties) {
       // otherwise, just search county name
       return terms[0].trim() === c.name;
     });
-		if (county !== undefined) {
-			tooltip.innerHTML = `The population of ${county.name}, ${county.state} is ${popFormat(county.population)}`;
-		}
-		else {
-			tooltip.innerHTML = `We could not find a county matching ${e.target.value}`;
-		}
+
+    if (county === undefined) {
+      tooltip.innerHTML = `We could not find a county matching ${e.target.value}`;
+      return;
+    }
+
+		updateTooltip(county);
 	});
 
   // add select change listener
