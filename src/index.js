@@ -3,9 +3,7 @@ import * as topojson from 'topojson';
 import * as scaleChromatic from 'd3-scale-chromatic';
 import 'file-loader?name=[name].[ext]!./index.html';
 
-const svg = d3.select('svg'),
-    width = +svg.attr('width'),
-    height = +svg.attr('height');
+const svg = d3.select('svg');
 
 // save reference to DOM elements
 const dataTypeSelect = document.getElementById('select-data');
